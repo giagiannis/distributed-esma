@@ -2,4 +2,4 @@
 .project
 .settings
 /target
-sample_data/
+*.txt

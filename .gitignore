@@ -3,3 +3,5 @@
 .settings
 /target
 *.txt
+*.bin
+sample_data/

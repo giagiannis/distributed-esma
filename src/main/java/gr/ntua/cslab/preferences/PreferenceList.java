@@ -16,7 +16,6 @@
 package gr.ntua.cslab.preferences;
 
 import java.util.LinkedList;
-import java.util.Random;
 
 /**
  * Preference list, used to contain all the preferences ({@link Preference} objects)
@@ -30,6 +29,7 @@ public class PreferenceList {
 	public static int BUFFER_SIZE=-1;
 	public static int PREFERENCES_COUNT=-1;
 	public static String PREFERENCE_FILE="";
+	public static int FIRST_AGENT_IN_FILE=1;
 	
 	private Preference[] buffer;
 	private int indexGlobal=1;
@@ -71,7 +71,7 @@ public class PreferenceList {
 	}
 	
 	private long estimateBufferPosition(int preferene){
-		return PREFERENCES_COUNT*Preference.length()*(id-1)+((preferene-1)*Preference.length());
+		return PREFERENCES_COUNT*Preference.length()*(id-1)+((preferene-PreferenceList.FIRST_AGENT_IN_FILE)*Preference.length());
 	}
 	
 	public void setNext(int rank) {

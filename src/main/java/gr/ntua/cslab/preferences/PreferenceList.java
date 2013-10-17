@@ -110,6 +110,7 @@ public class PreferenceList {
 		lists.clear();
 		lists=null;
 		System.gc();
+		
 //
 //		PreferenceList list = new PreferenceList(1000);
 //		while(list.hasMore()){

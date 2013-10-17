@@ -20,6 +20,7 @@ import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * Class used to transform the ASCII data to binary data.
@@ -90,7 +91,7 @@ public class DataTransformer {
 		for(int i=0;i<prefs.length;i++){
 			for(int j=0;j<prefs[i].length;j++){
 				int next=prefs[i][j];
-				int revnext = opRevPrefs[next-1][j];
+				int revnext = opRevPrefs[next-1][i];
 				results[index++]=next;
 				results[index++]=revnext;
 			}
@@ -100,10 +101,30 @@ public class DataTransformer {
 		
 	public static void writeToFile(int[] array, String filename) throws IOException{
 		DataOutputStream out = new DataOutputStream(new FileOutputStream(filename));
-		for(int d:array){
-			out.writeInt(d);
-		}
+		out.write(createByteArray(array));
 		out.close();
+	}
+	
+	private static byte[] createByteArray(int[] array){
+		byte[] results = new byte[array.length*4];
+		int index=0;
+		for(int d:array){
+			for(byte b:getBytes(d)){
+				results[index++]=b;
+			}
+		}
+		return results;
+	}
+	
+	private static byte[] getBytes(Integer number){
+		ByteBuffer buf = ByteBuffer.allocate(4);
+		buf.putInt(number);
+		return buf.array();
+	}
+	
+	private static String getOutputFileName(String inputFile){
+		String basename = inputFile.substring(inputFile.lastIndexOf('/')+1);
+		return basename.substring(0, basename.lastIndexOf('.'))+".bin";
 	}
 	
 	public static void main(String[] args) throws IOException {
@@ -111,26 +132,32 @@ public class DataTransformer {
 			System.err.println("Please provide men and women datasets as arguments");
 			System.exit(1);
 		}
+		
+		
 		System.out.print("Reading from files...\t");
 		long start = System.currentTimeMillis();
 		men = DataTransformer.getDataset(args[0]);
 		women = DataTransformer.getDataset(args[1]);
 		menRev = DataTransformer.getDatasetReversed(args[0]);
 		womenRev = DataTransformer.getDatasetReversed(args[1]);
+		
 		System.out.println("Done ("+(System.currentTimeMillis()-start)+" ms)");
-
 		System.out.print("Transforming data...\t");
 		start = System.currentTimeMillis();
 		int[] menData=calculate(men, womenRev);
 		int[] womenData=calculate(women, menRev);
 		System.out.println("Done ("+(System.currentTimeMillis()-start)+" ms)");
-		System.out.print("Writing file men_binary.txr...\t");
+		
+		String menOut=getOutputFileName(args[0]);
+		String womenOut=getOutputFileName(args[1]);
+		
+		System.out.format("Writing file %s...\t", menOut);
 		start = System.currentTimeMillis();
-		writeToFile(menData, "men_binary.txt");
+		writeToFile(menData, menOut);
 		System.out.println("Done ("+(System.currentTimeMillis()-start)+" ms)");
-		System.out.print("Writing file women_binary.txr...\t");
+		System.out.format("Writing file %s...\t", womenOut);
 		start = System.currentTimeMillis();
-		writeToFile(womenData, "women_binary.txt");
+		writeToFile(womenData, womenOut);
 		System.out.println("Done ("+(System.currentTimeMillis()-start)+" ms)");
 
 

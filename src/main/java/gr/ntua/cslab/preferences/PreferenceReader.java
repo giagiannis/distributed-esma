@@ -18,6 +18,7 @@ package gr.ntua.cslab.preferences;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 
 /**
  * Class used to load preferences from file.
@@ -26,20 +27,26 @@ import java.io.RandomAccessFile;
  */
 public class PreferenceReader {
 
-	private RandomAccessFile file;
+	private static RandomAccessFile sharedFile = openFile();
 	
 	/**
-	 * The name of the file containing the preferences and the offset who points to the first
+	 * Empty constructor
 	 * preference. 
 	 */
-	public PreferenceReader(String fileName, long startOffset) {
-		try{
-			file = new RandomAccessFile(fileName, "r");
-			file.seek(startOffset);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
+	public PreferenceReader() {
+	
+	}
+	
+	private static RandomAccessFile openFile(){
+		if(PreferenceList.PREFERENCE_FILE==null || PreferenceList.PREFERENCE_FILE.equals(""))
+			return null;
+		RandomAccessFile file=null;
+		try {
+			file = new RandomAccessFile(PreferenceList.PREFERENCE_FILE, "r");
+		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
+		return file;
 	}
 	
 	/**
@@ -47,18 +54,40 @@ public class PreferenceReader {
 	 * @param count
 	 * @return
 	 */
-	public Preference[] getPreferences(int count){
+	@Deprecated
+	public Preference[] getPreferencesSlow(int count){
 		Preference[] res = new Preference[count];
 		for(int i=0;i<count;i++){
 			res[i] = new Preference();
 			try {
-			res[i].setRankId(file.readInt());
-				res[i].setForeignRank(file.readInt());
+				res[i].setRankId(sharedFile.readInt());
+				res[i].setForeignRank(sharedFile.readInt());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 		return res;
+	}
+	
+	public Preference[] getPreferences(int count){
+		ByteBuffer bf = ByteBuffer.wrap(bulkReadFromFile(count));
+		Preference[] results = new Preference[count];
+		int index=0;
+		for(int i=0;i<count;i++){
+			results[i] = new Preference(bf.getInt(index), bf.getInt(index+4));
+			index+=8;
+		}
+		return results;
+	}
+	
+	private byte[] bulkReadFromFile(int count){
+		byte[] buffer = new byte[count*Preference.length()];
+		try {
+			sharedFile.read(buffer);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return buffer;
 	}
 	
 	/**
@@ -67,10 +96,27 @@ public class PreferenceReader {
 	 */
 	public void seek(long offset){
 		try {
-			file.seek(offset);
+			sharedFile.seek(offset);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public static void main(String[] args) throws FileNotFoundException {
+		PreferenceList.PREFERENCE_FILE=args[0];
+		PreferenceReader.sharedFile = openFile();
+		System.out.println("Set up preference file... ("+PreferenceList.PREFERENCE_FILE+")");
+//		PreferenceReader.sharedFile=new RandomAccessFile(args[0], "r");
+		PreferenceReader reader = new PreferenceReader();
+		long start=System.currentTimeMillis();
+		reader.seek(0);
+		Preference[] buffer = reader.getPreferencesSlow(new Integer(args[1]));
+		long normal = System.currentTimeMillis()-start;start=System.currentTimeMillis();
+		reader.seek(0);
+		buffer = reader.getPreferences(new Integer(args[1]));
+		long bulk = System.currentTimeMillis()-start;
+		
+		System.out.format("Normal:\t%.3f s,\tBulk:\t%.3f s\n",normal/1000.0, bulk/1000.0);
 	}
 	
 }

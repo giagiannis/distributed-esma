@@ -15,6 +15,7 @@
  */
 package gr.ntua.cslab.preferences;
 
+
 /**
  * Class used to hold a preference along with the foreign rank. This class (used as
  * a data structure) will hold a preference id along with the preference rank for the
@@ -31,7 +32,7 @@ public class Preference {
 	 * Empty constructor
 	 */
 	public Preference() {
-		// TODO Auto-generated constructor stub
+		
 	}
 	
 	/**
@@ -79,7 +80,7 @@ public class Preference {
 	 */
 	@Override
 	public String toString() {
-		return this.rankId+" ("+this.foreignRank+")";
+		return this.rankId+"("+this.foreignRank+")";
 	}
 	
 	

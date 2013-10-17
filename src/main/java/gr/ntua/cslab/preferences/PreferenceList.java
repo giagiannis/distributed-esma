@@ -15,6 +15,9 @@
  */
 package gr.ntua.cslab.preferences;
 
+import java.util.LinkedList;
+import java.util.Random;
+
 /**
  * Preference list, used to contain all the preferences ({@link Preference} objects)
  * for an agent.
@@ -28,30 +31,103 @@ public class PreferenceList {
 	public static int PREFERENCES_COUNT=-1;
 	public static String PREFERENCE_FILE="";
 	
-	private Preference[] preferences;
-	
-	
+	private Preference[] buffer;
+	private int indexGlobal=1;
+	private int indexInBuffer=-1;
+	private PreferenceReader reader;
+	private int id;
 	/**
 	 * 
 	 */
 	public PreferenceList(int id) {
-		PreferenceReader reader = new PreferenceReader(PREFERENCE_FILE, PREFERENCES_COUNT*Preference.length()*(id-1));
-		preferences = reader.getPreferences(BUFFER_SIZE);
-		for(Preference d:preferences){
-			System.out.println(d);
-		}
+		this.id=id;
+		reader = new PreferenceReader();
+		this.setNext(1);
 	}
 	
+	public Preference getNext(){
+		if(!this.hasMore()){
+			return null;
+		}
+		if(this.bufferIsExhausted())
+			this.setNext(this.indexGlobal);
+		indexGlobal++;
+		return this.buffer[indexInBuffer++];
+	}
 	
-	private void initializePreferenceList(){
-		
+	public boolean bufferIsExhausted(){
+		return indexInBuffer>=buffer.length;
+	}
+	
+	public boolean hasMore(){
+		return (indexGlobal<=PREFERENCES_COUNT);
+	}
+	
+	private void fillBuffer(){
+		int bufferSize=((indexGlobal-1)+BUFFER_SIZE>PREFERENCES_COUNT?PREFERENCES_COUNT-(indexGlobal-1):BUFFER_SIZE);
+//		System.out.println("FILL BUFFER EVENT at pref index "+this.indexGlobal+" BUFFER: "+bufferSize);
+		buffer = reader.getPreferences(bufferSize);
+		indexInBuffer=0;
+	}
+	
+	private long estimateBufferPosition(int preferene){
+		return PREFERENCES_COUNT*Preference.length()*(id-1)+((preferene-1)*Preference.length());
+	}
+	
+	public void setNext(int rank) {
+		this.indexGlobal=rank;
+		reader.seek(this.estimateBufferPosition(rank));
+		this.fillBuffer();
 	}
 	
 	public static void main(String[] args) {
 		PreferenceList.PREFERENCE_FILE=args[0];
 		PreferenceList.PREFERENCES_COUNT=new Integer(args[1]);
 		PreferenceList.BUFFER_SIZE=new Integer(args[2]);
-		PreferenceList list = new PreferenceList(1);
 		
+		System.out.format("%d\t",BUFFER_SIZE);
+		
+		LinkedList<PreferenceList> lists = new LinkedList<PreferenceList>();
+		long start=System.currentTimeMillis();
+		for(int i=1;i<=PREFERENCES_COUNT;i++){
+			lists.add(new PreferenceList(i));
+		}
+		System.out.format("%.3f\t",(System.currentTimeMillis()-start)/1000.0);
+		start = System.currentTimeMillis();
+		int count=0;
+		while(lists.get(0).hasMore()){
+			for(PreferenceList l:lists){
+				if(l.getNext()!=null){
+					count+=1;
+				}
+			}
+		}
+		System.out.format("%.3f\n",(System.currentTimeMillis()-start)/1000.0);
+		
+		if(count!=PREFERENCES_COUNT*PREFERENCES_COUNT)
+			System.err.println("Wrong results man!");
+		
+		lists.clear();
+		lists=null;
+		System.gc();
+//
+//		PreferenceList list = new PreferenceList(1000);
+//		while(list.hasMore()){
+//			list.getNext();
+//		}
+		
+//		PreferenceList list;
+//		for(int ind=1;ind<=PREFERENCES_COUNT;ind++){
+//			list = new PreferenceList(ind);
+//			Random rand = new Random();
+//			for(int i=0;i<1; i++){
+//				while(list.hasMore()){
+//					System.out.print(list.getNext()+" ");
+//				}
+//				System.out.println();
+////				list.setNext(rand.nextInt(PREFERENCES_COUNT)+1);
+//			}
+//			System.out.println("======================================================");
+//		}
 	}
 }

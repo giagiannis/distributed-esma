@@ -27,7 +27,7 @@ import java.nio.ByteBuffer;
  */
 public class PreferenceReader {
 
-	private static RandomAccessFile sharedFile = openFile();
+	private RandomAccessFile file;
 	
 	/**
 	 * Empty constructor
@@ -37,12 +37,20 @@ public class PreferenceReader {
 	
 	}
 	
-	private static RandomAccessFile openFile(){
-		if(PreferenceList.PREFERENCE_FILE==null || PreferenceList.PREFERENCE_FILE.equals(""))
+	public PreferenceReader(RandomAccessFile file){
+		this.file=file;
+	}
+	
+	public void setFile(RandomAccessFile file){
+		this.file=file;
+	}
+	
+	public static RandomAccessFile openFile(String fileName){
+		if(fileName==null || fileName.equals(""))
 			return null;
 		RandomAccessFile file=null;
 		try {
-			file = new RandomAccessFile(PreferenceList.PREFERENCE_FILE, "r");
+			file = new RandomAccessFile(fileName, "r");
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -60,8 +68,8 @@ public class PreferenceReader {
 		for(int i=0;i<count;i++){
 			res[i] = new Preference();
 			try {
-				res[i].setRankId(sharedFile.readInt());
-				res[i].setForeignRank(sharedFile.readInt());
+				res[i].setRankId(file.readInt());
+				res[i].setForeignRank(file.readInt());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -83,7 +91,7 @@ public class PreferenceReader {
 	private byte[] bulkReadFromFile(int count){
 		byte[] buffer = new byte[count*Preference.length()];
 		try {
-			sharedFile.read(buffer);
+			file.read(buffer);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -96,27 +104,23 @@ public class PreferenceReader {
 	 */
 	public void seek(long offset){
 		try {
-			sharedFile.seek(offset);
+			file.seek(offset);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
 	public static void main(String[] args) throws FileNotFoundException {
-		PreferenceList.PREFERENCE_FILE=args[0];
-		PreferenceReader.sharedFile = openFile();
-		System.out.println("Set up preference file... ("+PreferenceList.PREFERENCE_FILE+")");
-//		PreferenceReader.sharedFile=new RandomAccessFile(args[0], "r");
-		PreferenceReader reader = new PreferenceReader();
+		String filename=args[0];
+		PreferenceReader reader = new PreferenceReader(PreferenceReader.openFile(filename));
 		long start=System.currentTimeMillis();
-		reader.seek(0);
-		Preference[] buffer = reader.getPreferencesSlow(new Integer(args[1]));
-		long normal = System.currentTimeMillis()-start;start=System.currentTimeMillis();
-		reader.seek(0);
-		buffer = reader.getPreferences(new Integer(args[1]));
+		Preference[] buffer=reader.getPreferences(new Integer(args[1]));
+		for(Preference p:buffer){
+			System.out.print(p+" ");
+		}
+		System.out.println();
 		long bulk = System.currentTimeMillis()-start;
-		
-		System.out.format("Normal:\t%.3f s,\tBulk:\t%.3f s\n",normal/1000.0, bulk/1000.0);
+		System.out.format("Time:\t%.3f s\n",bulk/1000.0);
 	}
 	
 }

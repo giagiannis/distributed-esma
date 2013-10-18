@@ -16,9 +16,12 @@
 package gr.ntua.cslab.containers;
 
 /**
- * @author giannis
+ * @author Giannis Giannakopoulos
  *
  */
-public class Person {
+public class Agent {
 
+	public static final boolean MAN=true, WOMAN=false;
+	public static final char 
+			
 }

@@ -13,7 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package gr.ntua.cslab.preferences;
+package gr.ntua.cslab.containers.preferences;
+
+import gr.ntua.cslab.utils.File;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -43,18 +45,6 @@ public class PreferenceReader {
 	
 	public void setFile(RandomAccessFile file){
 		this.file=file;
-	}
-	
-	public static RandomAccessFile openFile(String fileName){
-		if(fileName==null || fileName.equals(""))
-			return null;
-		RandomAccessFile file=null;
-		try {
-			file = new RandomAccessFile(fileName, "r");
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-		return file;
 	}
 	
 	/**
@@ -112,7 +102,7 @@ public class PreferenceReader {
 	
 	public static void main(String[] args) throws FileNotFoundException {
 		String filename=args[0];
-		PreferenceReader reader = new PreferenceReader(PreferenceReader.openFile(filename));
+		PreferenceReader reader = new PreferenceReader(File.openFileFromLocalDisk(filename));
 		long start=System.currentTimeMillis();
 		Preference[] buffer=reader.getPreferences(new Integer(args[1]));
 		for(Preference p:buffer){

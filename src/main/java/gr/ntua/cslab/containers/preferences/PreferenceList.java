@@ -13,11 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package gr.ntua.cslab.preferences;
+package gr.ntua.cslab.containers.preferences;
+
+import gr.ntua.cslab.conf.DataFileConfiguration;
+import gr.ntua.cslab.containers.agents.Agent;
+import gr.ntua.cslab.utils.File;
 
 import java.io.RandomAccessFile;
-
-import org.eclipse.jdt.internal.compiler.impl.IntConstant;
 
 /**
  * Preference list, used to contain all the preferences ({@link Preference} objects)
@@ -33,10 +35,9 @@ public class PreferenceList {
 	private int indexInBuffer=-1;
 	private PreferenceReader reader;
 	private int id;
-	private int bufferSize=-1;
-	private int preferenceCount=-1;
-	private int firstAgentInFile=1;
-
+	
+	private DataFileConfiguration conf;
+	
 	/**
 	 * Empty constructor
 	 */
@@ -47,39 +48,17 @@ public class PreferenceList {
 	/**
 	 * 
 	 */
-	public PreferenceList(int id, RandomAccessFile file, int preferenceCount, int bufferSize, int firstAgentInFile) {
+	public PreferenceList(int id, DataFileConfiguration conf) {
 		this.id=id;
-		this.preferenceCount=preferenceCount;
-		this.bufferSize = bufferSize;
-		this.firstAgentInFile=firstAgentInFile;
-		reader = new PreferenceReader(file);
+		this.conf = conf;
+		reader = new PreferenceReader(conf.getDataFile());
 		this.setNext(1);
 	}
 	
-	public int getBufferSize(){
-		return this.bufferSize;
+	public DataFileConfiguration getConf(){
+		return this.conf;
 	}
 	
-	public void setBufferSize(int numberOfPreferences){
-		this.bufferSize=numberOfPreferences;
-	}
-	
-	public int getPreferenceCount() {
-		return preferenceCount;
-	}
-
-	public void setPreferenceCount(int preferenceCount) {
-		this.preferenceCount = preferenceCount;
-	}
-
-	public int getFirstAgentInFile() {
-		return firstAgentInFile;
-	}
-
-	public void setFirstAgentInFile(int firstAgentInFile) {
-		this.firstAgentInFile = firstAgentInFile;
-	}
-
 	public Preference getNext(){
 		if(!this.hasMore()){
 			return null;
@@ -95,18 +74,18 @@ public class PreferenceList {
 	}
 	
 	public boolean hasMore(){
-		return (indexGlobal<=preferenceCount);
+		return (indexGlobal<=this.conf.getPreferencesCount());
 	}
 	
 	private void fillBuffer(){
-		int bufferSize=((indexGlobal-1)+this.bufferSize>preferenceCount?preferenceCount-(indexGlobal-1):this.bufferSize);
+		int bufferSize=((indexGlobal-1)+this.conf.getBufferSize()>this.conf.getPreferencesCount()?this.conf.getPreferencesCount()-(indexGlobal-1):conf.getBufferSize());
 //		System.out.println("FILL BUFFER EVENT at pref index "+this.indexGlobal+" BUFFER: "+bufferSize);
 		buffer = reader.getPreferences(bufferSize);
 		indexInBuffer=0;
 	}
 	
-	private long estimateBufferPosition(int preferene){
-		return preferenceCount*Preference.length()*(id-this.firstAgentInFile)+((preferene-1)*Preference.length());
+	private long estimateBufferPosition(int preference){
+		return conf.getPreferencesCount()*Preference.length()*(id-this.conf.getFirstAgentInFile())+((preference-1)*Preference.length());
 	}
 	
 	public void setNext(int rank) {
@@ -115,19 +94,25 @@ public class PreferenceList {
 		this.fillBuffer();
 	}
 	
+	public Agent getAgent(){
+		return new Agent(this.id,this);
+	}
+	
 	public static void main(String[] args) {
 		if(args.length<5){
 			System.err.println("I need file input, id, preference count and buffer size");
 			System.exit(1);;
 		}
-		RandomAccessFile file = PreferenceReader.openFile(args[0]);
-		int 	id=new Integer(args[1]),
-				prefC=new Integer(args[2]),
-				buffS=new Integer(args[3]),
-				firsA=new Integer(args[4]);
+		int 	id=new Integer(args[1]);
 		
+		RandomAccessFile file = File.openFileFromLocalDisk(args[0]);
+		DataFileConfiguration conf = new DataFileConfiguration();
+		conf.setPreferencesCount(new Integer(args[2]));
+		conf.setBufferSize(new Integer(args[3]));
+		conf.setFirstAgentInFile(new Integer(args[4]));
+		conf.setDataFile(file);
 		
-		PreferenceList list = new PreferenceList(id,file,prefC,buffS,firsA);
+		PreferenceList list = new PreferenceList(id,conf);
 		
 		while(list.hasMore()){
 			System.out.println(list.getNext());

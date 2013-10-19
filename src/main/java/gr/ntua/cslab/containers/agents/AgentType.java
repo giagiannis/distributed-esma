@@ -13,15 +13,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package gr.ntua.cslab.containers;
+package gr.ntua.cslab.containers.agents;
 
 /**
- * @author Giannis Giannakopoulos
+ * @author giannis
  *
  */
-public class Agent {
-
-	public static final boolean MAN=true, WOMAN=false;
-	public static final char 
-			
-}
+public enum AgentType {MAN, WOMAN}

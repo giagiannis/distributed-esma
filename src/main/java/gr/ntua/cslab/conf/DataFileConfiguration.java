@@ -73,11 +73,11 @@ public class DataFileConfiguration {
 		return agentsType;
 	}
 
-	public void setAgentsType(AgentType agentsType) {
+        public void setAgentsType(AgentType agentsType) {
 		this.agentsType = agentsType;
 	}
 
-	public int getNumberOfAgents() {
+    	public int getNumberOfAgents() {
 		return numberOfAgents;
 	}
 

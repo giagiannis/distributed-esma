@@ -28,7 +28,7 @@ import java.io.RandomAccessFile;
  *
  */
 
-public class PreferenceList {
+public class PreferenceList {						
 	
 	private Preference[] buffer;
 	private int indexGlobal=1;
